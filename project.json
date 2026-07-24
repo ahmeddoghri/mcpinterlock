@@ -1,0 +1,14 @@
+{
+  "tagline": "Policy firewall and audit layer for MCP tool calls",
+  "headline": "A tool call is a privilege request.",
+  "summary": "Enforce tool allowlists, path boundaries, destructive approvals, secret checks, and SSRF controls.",
+  "accent": "#ff9b73",
+  "topics": "mcp,model-context-protocol,ai-agents,security,ssrf,policy-engine",
+  "sources": [
+    [
+      "MCP security best practices",
+      "https://modelcontextprotocol.io/docs/tutorials/security/security_best_practices"
+    ]
+  ],
+  "name": "mcpinterlock"
+}

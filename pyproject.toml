@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mcpinterlock"
+version = "0.1.0"
+description = "Policy firewall and audit layer for MCP tool calls"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [{name = "Ahmed Doghri"}]
+dependencies = []
+
+[project.scripts]
+mcpinterlock = "mcpinterlock.cli:main"
+
+[tool.setuptools]
+packages = ["mcpinterlock"]
+
+[tool.setuptools.package-data]
+mcpinterlock = ["web/*.html"]

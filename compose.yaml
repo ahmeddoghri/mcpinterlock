@@ -1,0 +1,5 @@
+services:
+  mcpinterlock:
+    build: .
+    ports:
+      - "8090:8090"
