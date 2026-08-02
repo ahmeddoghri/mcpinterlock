@@ -42,8 +42,15 @@ def _private_url(url: str) -> str | None:
         addresses = {ipaddress.ip_address(item[4][0]) for item in socket.getaddrinfo(parsed.hostname, None)}
     except socket.gaierror:
         return "Hostname could not be resolved"
-    if any(address.is_private or address.is_loopback or address.is_link_local or address.is_reserved for address in addresses):
-        return "URL resolves to a private, loopback, link-local, or reserved address"
+    # `is_private or is_loopback or is_link_local or is_reserved` misses real
+    # SSRF targets: RFC 6598 carrier-grade-NAT shared space (100.64.0.0/10,
+    # used internally by real cloud providers) has is_private=False in
+    # Python's ipaddress module, and multicast addresses aren't covered by
+    # any of those four properties either. `not is_global` is the correct
+    # umbrella for "not publicly routable unicast"; multicast is checked
+    # separately since is_global is True for the multicast range.
+    if any((not address.is_global) or address.is_multicast for address in addresses):
+        return "URL resolves to a non-public or multicast address"
     return None
 
 

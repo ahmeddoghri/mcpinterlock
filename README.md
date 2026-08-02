@@ -40,6 +40,27 @@ Open <http://127.0.0.1:8090>. Analyze your own JSON input with `mcpinterlock ana
 
 A `fetch_url` call targeting the AWS/GCP/Azure metadata address is denied for two independent reasons at once: the resolved address is link-local, and the requested output path falls outside the configured workspace root. A second test runs an allowlisted read inside the root, confirms it's permitted, and checks the decision landed in SQLite — so "why did it allow this one" has an actual answer.
 
+## Update: fixed an SSRF bypass via RFC 6598 carrier-grade NAT space
+
+The network check blocked a resolved address if `is_private or
+is_loopback or is_link_local or is_reserved` was true. Python's
+`ipaddress` module does not classify RFC 6598's carrier-grade-NAT shared
+address space (`100.64.0.0/10`) as private — that range is used
+internally by real cloud providers and is explicitly non-public per the
+RFC, but none of those four properties catch it. Multicast addresses
+weren't covered by any of them either.
+
+Verified directly: a hostname resolving into `100.64.0.0/10` passed
+`_private_url` cleanly — `None`, meaning allowed — exactly the SSRF this
+tool exists to stop. Fixed by switching to `not address.is_global` as the
+umbrella check (the correct inverse of "publicly routable unicast"),
+plus an explicit `is_multicast` check since multicast addresses report
+`is_global=True` in Python's model and would otherwise slip through the
+inverse alone. Verified against known-good public targets (still
+allowed) and every previously-blocked range (metadata endpoint, loopback,
+RFC 1918 private space, `0.0.0.0`, an IPv4-mapped IPv6 metadata address —
+all still blocked). `tests/test_cgnat_ssrf_bypass.py` covers all of it.
+
 ## Scope
 
 This is a pre-execution policy layer that mediates the calls presented to it, not an OAuth implementation or an OS-level sandbox. Production MCP deployments still need audience-validated tokens, per-client consent flows, egress network controls, and a server implementation that can't be talked out of calling this layer in the first place.
