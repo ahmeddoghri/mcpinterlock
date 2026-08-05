@@ -18,7 +18,7 @@ Every tool call is checked against an explicit policy before it runs: is the too
 - Tool allowlisting, destructive-action approval gating, and path-boundary enforcement
 - Live secret-pattern detection in call arguments
 - Every decision logged to SQLite with the specific violation codes that fired
-- CLI, JSON API, browser workbench, Docker, tests, and CI
+- CLI, JSON API, browser workbench, Docker, tests
 
 ## Run it end to end
 
