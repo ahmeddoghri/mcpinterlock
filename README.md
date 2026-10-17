@@ -1,5 +1,7 @@
 # mcpinterlock
 
+[![tests](https://github.com/ahmeddoghri/mcpinterlock/actions/workflows/tests.yml/badge.svg)](https://github.com/ahmeddoghri/mcpinterlock/actions/workflows/tests.yml) [![case study](https://img.shields.io/badge/case%20study-adoghri.com-e0703e)](https://adoghri.com/project-49.html)
+
 **An agent with a `fetch_url` tool is one crafted request away from reading your cloud credentials.**
 
 ![mcpinterlock cover](demo/cover.png)
