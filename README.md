@@ -1,6 +1,6 @@
 # mcpinterlock
 
-[![tests](https://github.com/ahmeddoghri/mcpinterlock/actions/workflows/tests.yml/badge.svg)](https://github.com/ahmeddoghri/mcpinterlock/actions/workflows/tests.yml) [![case study](https://img.shields.io/badge/case%20study-adoghri.com-e0703e)](https://adoghri.com/project-49.html)
+[![tests](https://github.com/ahmeddoghri/mcpinterlock/actions/workflows/tests.yml/badge.svg)](https://github.com/ahmeddoghri/mcpinterlock/actions/workflows/tests.yml) [![case study](https://img.shields.io/badge/case%20study-adoghri.com-e0703e)](https://adoghri.com/project-49.html) [![live demo](https://img.shields.io/badge/live%20demo-workbench-2d5f86)](https://ahmeddoghri.github.io/mcpinterlock/)
 
 **An agent with a `fetch_url` tool is one crafted request away from reading your cloud credentials.**
 
@@ -21,6 +21,7 @@ Every tool call is checked against an explicit policy before it runs: is the too
 - Live secret-pattern detection in call arguments
 - Every decision logged to SQLite with the specific violation codes that fired
 - CLI, JSON API, browser workbench, Docker, tests
+- A [live workbench](https://ahmeddoghri.github.io/mcpinterlock/) that runs the policy engine in your own tab
 
 ## Run it end to end
 
@@ -32,6 +33,19 @@ mcpinterlock serve
 ```
 
 Open <http://127.0.0.1:8090>. Analyze your own JSON input with `mcpinterlock analyze input.json`.
+
+## The workbench in your browser
+
+<https://ahmeddoghri.github.io/mcpinterlock/> runs the same policy engine with no
+server behind it: `mcpinterlock/web/policy.js` is a port of `analyze()`, and
+`tests/run_parity.py` feeds 28 tool calls through both implementations in CI and
+fails the build on any disagreement. Edit the call or the policy and rerun; the
+page posts nothing anywhere.
+
+The one deliberate difference is DNS. The CLI calls `getaddrinfo()` to catch a
+hostname that points at a private address, which a browser cannot do. The port
+checks literal IP addresses exactly as Python does, and reports a hostname it
+cannot resolve rather than quietly allowing it.
 
 ## API
 

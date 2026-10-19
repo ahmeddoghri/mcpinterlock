@@ -26,6 +26,20 @@ jobs:
           mcpinterlock demo > /tmp/demo.json
           python -c "import json; d=json.load(open('/tmp/demo.json')); assert d['decision']=='deny'; assert d['violation_count']==3, d"
 
+  web-parity:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - run: python -m pip install -e .
+      - name: The workbench JavaScript must decide exactly as the engine does
+        run: python tests/run_parity.py
+
   docker:
     runs-on: ubuntu-latest
     steps:
@@ -36,3 +50,4 @@ jobs:
           docker run -d --name mi -p 8090:8090 mcpinterlock:ci
           for i in $(seq 1 20); do curl -sf http://localhost:8090/ >/dev/null && break; sleep 1; done
           curl -sf http://localhost:8090/ | grep -qi '<html'
+          curl -sf http://localhost:8090/policy.js | grep -q 'function analyze'

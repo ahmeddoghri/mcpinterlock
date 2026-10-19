@@ -21,10 +21,15 @@ def make_handler(web_root: Path):
         def do_GET(self):
             if self.path == "/api/demo":
                 return self._json({"input": DEMO, "result": analyze(DEMO)})
-            if self.path in ("/", "/index.html"):
-                body = (web_root / "index.html").read_bytes()
+            # the workbench decides in the browser, so it needs policy.js too
+            static = {"/": ("index.html", "text/html; charset=utf-8"),
+                      "/index.html": ("index.html", "text/html; charset=utf-8"),
+                      "/policy.js": ("policy.js", "text/javascript; charset=utf-8")}
+            if self.path in static:
+                name, content_type = static[self.path]
+                body = (web_root / name).read_bytes()
                 self.send_response(HTTPStatus.OK)
-                self.send_header("Content-Type", "text/html; charset=utf-8")
+                self.send_header("Content-Type", content_type)
                 self.send_header("Content-Length", str(len(body)))
                 self.end_headers()
                 self.wfile.write(body)
