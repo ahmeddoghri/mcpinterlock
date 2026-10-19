@@ -19,4 +19,4 @@ mcpinterlock = "mcpinterlock.cli:main"
 packages = ["mcpinterlock"]
 
 [tool.setuptools.package-data]
-mcpinterlock = ["web/*.html"]
+mcpinterlock = ["web/*.html", "web/*.js"]
