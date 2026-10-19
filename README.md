@@ -63,6 +63,23 @@ allowed) and every previously-blocked range (metadata endpoint, loopback,
 RFC 1918 private space, `0.0.0.0`, an IPv4-mapped IPv6 metadata address —
 all still blocked). `tests/test_cgnat_ssrf_bypass.py` covers all of it.
 
+## Every reason, not just the first one
+
+The demo request targets the cloud metadata endpoint over plain HTTP. It was
+denied for the scheme and returned immediately, so the address check never
+ran and the violation list never mentioned that the target was also a
+non-public address. For a firewall whose selling point is denying with
+evidence, reporting one reason out of two is the wrong half of the job.
+
+`_private_url` now returns every applicable reason, so the demo denies with
+three violations instead of two:
+
+```
+network_target_blocked   params.arguments.url      Production network targets must use HTTPS
+network_target_blocked   params.arguments.url      URL resolves to a non-public or multicast address
+path_outside_workspace   params.arguments.output   Path is outside configured roots: /tmp/report.json
+```
+
 ## Scope
 
 This is a pre-execution policy layer that mediates the calls presented to it, not an OAuth implementation or an OS-level sandbox. Production MCP deployments still need audience-validated tokens, per-client consent flows, egress network controls, and a server implementation that can't be talked out of calling this layer in the first place.

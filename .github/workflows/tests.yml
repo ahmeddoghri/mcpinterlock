@@ -2,7 +2,6 @@ name: tests
 
 on:
   push:
-    branches: [main]
   pull_request:
   workflow_dispatch:
 
@@ -12,20 +11,28 @@ permissions:
 jobs:
   test:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
     strategy:
-      fail-fast: false
       matrix:
-        python: ['3.11', '3.13']
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: ${{ matrix.python }}
-      - name: Install
+          python-version: ${{ matrix.python-version }}
+      - run: python -m pip install -e .
+      - run: python -m unittest discover -s tests -v
+      - name: The demo request must be denied, with every reason
         run: |
-          python -m pip install --upgrade pip
-          pip install -e ".[dev]" || pip install -e .
-          pip install pytest
-      - name: Test
-        run: python -m pytest -q
+          mcpinterlock demo > /tmp/demo.json
+          python -c "import json; d=json.load(open('/tmp/demo.json')); assert d['decision']=='deny'; assert d['violation_count']==3, d"
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t mcpinterlock:ci .
+      - name: Smoke-test the workbench
+        run: |
+          docker run -d --name mi -p 8090:8090 mcpinterlock:ci
+          for i in $(seq 1 20); do curl -sf http://localhost:8090/ >/dev/null && break; sleep 1; done
+          curl -sf http://localhost:8090/ | grep -qi '<html'

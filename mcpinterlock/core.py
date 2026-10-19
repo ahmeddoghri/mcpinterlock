@@ -32,16 +32,24 @@ DEMO = {
 SECRET_PATTERN = re.compile(r"(?i)(api[_-]?key|token|secret|password)\s*[=:]\s*[^\s]+")
 
 
-def _private_url(url: str) -> str | None:
+def _private_url(url: str) -> list[str]:
+    """Every reason this URL is blocked, not just the first one.
+
+    Returning on the first failure hid the finding that mattered: the demo's
+    cloud-metadata URL is plain HTTP, so it was denied for the scheme and the
+    address check never ran. A caller reading the violations would not learn
+    that the target was also a non-public address.
+    """
+    reasons: list[str] = []
     parsed = urlparse(url)
     if parsed.scheme not in ("https", "http") or not parsed.hostname:
-        return "URL must use HTTP(S) with a hostname"
+        return ["URL must use HTTP(S) with a hostname"]
     if parsed.scheme == "http" and parsed.hostname not in ("localhost", "127.0.0.1", "::1"):
-        return "Production network targets must use HTTPS"
+        reasons.append("Production network targets must use HTTPS")
     try:
         addresses = {ipaddress.ip_address(item[4][0]) for item in socket.getaddrinfo(parsed.hostname, None)}
     except socket.gaierror:
-        return "Hostname could not be resolved"
+        return reasons + ["Hostname could not be resolved"]
     # `is_private or is_loopback or is_link_local or is_reserved` misses real
     # SSRF targets: RFC 6598 carrier-grade-NAT shared space (100.64.0.0/10,
     # used internally by real cloud providers) has is_private=False in
@@ -50,8 +58,8 @@ def _private_url(url: str) -> str | None:
     # umbrella for "not publicly routable unicast"; multicast is checked
     # separately since is_global is True for the multicast range.
     if any((not address.is_global) or address.is_multicast for address in addresses):
-        return "URL resolves to a non-public or multicast address"
-    return None
+        reasons.append("URL resolves to a non-public or multicast address")
+    return reasons
 
 
 def _inside_roots(value: str, roots: list[str]) -> bool:
@@ -93,8 +101,7 @@ def analyze(payload: dict[str, Any]) -> dict[str, Any]:
         if lower in ("path", "file", "filename", "output", "directory") and roots and not _inside_roots(value, roots):
             block("path_outside_workspace", f"Path is outside configured roots: {value}", f"params.arguments.{key}")
         if lower in ("url", "uri", "endpoint") and not policy.get("allow_private_networks", False):
-            reason = _private_url(value)
-            if reason:
+            for reason in _private_url(value):
                 block("network_target_blocked", reason, f"params.arguments.{key}")
         if SECRET_PATTERN.search(value):
             block("inline_secret", "Argument appears to contain an inline credential", f"params.arguments.{key}")
